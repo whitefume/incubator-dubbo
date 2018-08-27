@@ -98,10 +98,13 @@ public abstract class AbstractConfig implements Serializable {
         for (Method method : methods) {
             try {
                 String name = method.getName();
+                // 方法是public set
                 if (name.length() > 3 && name.startsWith("set") && Modifier.isPublic(method.getModifiers())
                         && method.getParameterTypes().length == 1 && isPrimitive(method.getParameterTypes()[0])) {
+                    // 获得属性
                     String property = StringUtils.camelToSplitName(name.substring(3, 4).toLowerCase() + name.substring(4), ".");
 
+                    // 启动参数变量获取，带config#id 例如dubbo.application.demo-provider.name
                     String value = null;
                     if (config.getId() != null && config.getId().length() > 0) {
                         String pn = prefix + config.getId() + "." + property;
@@ -110,6 +113,8 @@ public abstract class AbstractConfig implements Serializable {
                             logger.info("Use System Property " + pn + " to config dubbo");
                         }
                     }
+
+                    // 不带config#id dubbo.application.name
                     if (value == null || value.length() == 0) {
                         String pn = prefix + property;
                         value = System.getProperty(pn);
@@ -117,6 +122,8 @@ public abstract class AbstractConfig implements Serializable {
                             logger.info("Use System Property " + pn + " to config dubbo");
                         }
                     }
+
+                    // 覆盖优先级 启动参数 > xml配置 > properties .get 判断xml是否已经设置
                     if (value == null || value.length() == 0) {
                         Method getter;
                         try {
@@ -128,14 +135,17 @@ public abstract class AbstractConfig implements Serializable {
                                 getter = null;
                             }
                         }
+
                         if (getter != null) {
                             if (getter.invoke(config) == null) {
+//                                properties 获取 config#id 优先
                                 if (config.getId() != null && config.getId().length() > 0) {
                                     value = ConfigUtils.getProperty(prefix + config.getId() + "." + property);
                                 }
                                 if (value == null || value.length() == 0) {
                                     value = ConfigUtils.getProperty(prefix + property);
                                 }
+//                                老版本兼容不带config#id获取 dubbo.protocol.name
                                 if (value == null || value.length() == 0) {
                                     String legacyKey = legacyProperties.get(prefix + property);
                                     if (legacyKey != null && legacyKey.length() > 0) {
@@ -146,6 +156,7 @@ public abstract class AbstractConfig implements Serializable {
                             }
                         }
                     }
+//                    取到值，进行反射设置
                     if (value != null && value.length() > 0) {
                         method.invoke(config, convertPrimitive(method.getParameterTypes()[0], value));
                     }
@@ -156,6 +167,7 @@ public abstract class AbstractConfig implements Serializable {
         }
     }
 
+//   获取类名对应属性标签 例如 ServiceConfig 对应service
     private static String getTagName(Class<?> cls) {
         String tag = cls.getSimpleName();
         for (String suffix : SUFFIXES) {
@@ -295,6 +307,7 @@ public abstract class AbstractConfig implements Serializable {
                 || type == Object.class;
     }
 
+//    将键对应的值转换成目标的值
     private static Object convertPrimitive(Class<?> type, String value) {
         if (type == char.class || type == Character.class) {
             return value.length() > 0 ? value.charAt(0) : '\0';
