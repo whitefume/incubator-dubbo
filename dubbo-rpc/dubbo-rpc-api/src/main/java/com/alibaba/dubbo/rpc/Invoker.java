@@ -20,10 +20,11 @@ import com.alibaba.dubbo.common.Node;
 
 /**
  * Invoker. (API/SPI, Prototype, ThreadSafe)
- *
+ * 代表实体域，代表可执行体， 本地实现，远程实现， 集群实现
  * @see com.alibaba.dubbo.rpc.Protocol#refer(Class, com.alibaba.dubbo.common.URL)
  * @see com.alibaba.dubbo.rpc.InvokerListener
  * @see com.alibaba.dubbo.rpc.protocol.AbstractInvoker
+ * 消费者 通过 proxy 发起调用， proxy 调用invoker实现， 生产者封装成AbstractProxyInvoke， 生成exporter实例，网络收到请求找到对应exporter，完成调用。
  */
 public interface Invoker<T> extends Node {
 

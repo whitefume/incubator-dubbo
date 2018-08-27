@@ -21,7 +21,10 @@ import com.alibaba.dubbo.common.extension.Adaptive;
 import com.alibaba.dubbo.common.extension.SPI;
 
 /**
+ * 服务域， invoke 暴露和引用 主功能入口， 负责invoke 生命周期管理
  * Protocol. (API/SPI, Singleton, ThreadSafe)
+ * 处理服务暴露关键Invoke 转换Export 过程
+ * Dubbo 发生在DubboProtocol 的export 方法，主要打开socket侦听服务，接受请求，
  */
 @SPI("dubbo")
 public interface Protocol {
@@ -37,7 +40,7 @@ public interface Protocol {
      * Export service for remote invocation: <br>
      * 1. Protocol should record request source address after receive a request:
      * RpcContext.getContext().setRemoteAddress();<br>
-     * 2. export() must be idempotent, that is, there's no difference between invoking once and invoking twice when
+     * 2. export() must be idempotent 幂等, that is, there's no difference between invoking once and invoking twice when
      * export the same URL<br>
      * 3. Invoker instance is passed in by the framework, protocol needs not to care <br>
      *

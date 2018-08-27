@@ -20,7 +20,7 @@ import java.util.Map;
 
 /**
  * Invocation. (API, Prototype, NonThreadSafe)
- *
+ * 会话域，持有调用过程变量，如方法名，参数
  * @serial Don't change the class name and package name.
  * @see com.alibaba.dubbo.rpc.Invoker#invoke(Invocation)
  * @see com.alibaba.dubbo.rpc.RpcInvocation
@@ -45,7 +45,7 @@ public interface Invocation {
 
     /**
      * get arguments.
-     *
+     * 隐式参数
      * @return arguments.
      * @serial
      */
@@ -77,7 +77,7 @@ public interface Invocation {
 
     /**
      * get the invoker in current context.
-     *
+     * 对应invoker 对象
      * @return invoker.
      * @transient
      */
