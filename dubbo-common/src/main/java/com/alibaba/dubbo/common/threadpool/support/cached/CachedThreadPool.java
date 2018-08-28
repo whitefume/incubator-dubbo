@@ -29,8 +29,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * This thread pool is self-tuned. Thread will be recycled after idle for one minute, and new thread will be created for
- * the upcoming request.
+ * 缓存线程池，空闲一定时长，自动删除，需要时重建。代码如下：
  *
  * @see java.util.concurrent.Executors#newCachedThreadPool()
  */
@@ -44,9 +43,9 @@ public class CachedThreadPool implements ThreadPool {
         int queues = url.getParameter(Constants.QUEUES_KEY, Constants.DEFAULT_QUEUES);
         int alive = url.getParameter(Constants.ALIVE_KEY, Constants.DEFAULT_ALIVE);
         return new ThreadPoolExecutor(cores, threads, alive, TimeUnit.MILLISECONDS,
-                queues == 0 ? new SynchronousQueue<Runnable>() :
-                        (queues < 0 ? new LinkedBlockingQueue<Runnable>()
-                                : new LinkedBlockingQueue<Runnable>(queues)),
+                queues == 0 ? new SynchronousQueue<>() :
+                        (queues < 0 ? new LinkedBlockingQueue<>()
+                                : new LinkedBlockingQueue<>(queues)),
                 new NamedInternalThreadFactory(name, true), new AbortPolicyWithReport(name, url));
     }
 }

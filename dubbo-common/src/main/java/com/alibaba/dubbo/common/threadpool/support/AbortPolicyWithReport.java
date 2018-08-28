@@ -34,18 +34,26 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Abort Policy.
- * Log warn info when abort.
+ * 打印 JStack ，分析线程状态。
  */
 public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbortPolicyWithReport.class);
-
+    /**
+     * 线程名
+     */
     private final String threadName;
-
+    /**
+     * URL 对象
+     */
     private final URL url;
-
+    /**
+     * 最后打印时间
+     */
     private static volatile long lastPrintTime = 0;
-
+    /**
+     * 信号量，大小为 1 。
+     */
     private static Semaphore guard = new Semaphore(1);
 
     public AbortPolicyWithReport(String threadName, URL url) {
@@ -55,7 +63,7 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
 
     @Override
     public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
-        String msg = String.format("Thread pool is EXHAUSTED!" +
+        String msg = String.format("Thread pool is EXHAUSTED(用尽)!" +
                         " Thread Name: %s, Pool Size: %d (active: %d, core: %d, max: %d, largest: %d), Task: %d (completed: %d)," +
                         " Executor status:(isShutdown:%s, isTerminated:%s, isTerminating:%s), in %s://%s:%d!",
                 threadName, e.getPoolSize(), e.getActiveCount(), e.getCorePoolSize(), e.getMaximumPoolSize(), e.getLargestPoolSize(),
@@ -69,7 +77,7 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
     private void dumpJStack() {
         long now = System.currentTimeMillis();
 
-        //dump every 10 minutes
+        // 每 10 分钟，打印一次。
         if (now - lastPrintTime < 10 * 60 * 1000) {
             return;
         }
@@ -98,6 +106,7 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
                 FileOutputStream jstackStream = null;
                 try {
                     jstackStream = new FileOutputStream(new File(dumpPath, "Dubbo_JStack.log" + "." + dateStr));
+                    // 打印 JStack
                     JVMUtil.jstack(jstackStream);
                 } catch (Throwable t) {
                     logger.error("dump jstack error", t);
