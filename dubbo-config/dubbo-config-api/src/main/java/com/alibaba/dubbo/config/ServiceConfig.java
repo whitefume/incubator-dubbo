@@ -70,20 +70,41 @@ import static com.alibaba.dubbo.common.utils.NetUtils.isInvalidPort;
 public class ServiceConfig<T> extends AbstractServiceConfig {
 
     private static final long serialVersionUID = 3033787999037024738L;
-
+    /**
+     * 自适应 Protocol 实现对象
+     */
     private static final Protocol protocol = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
-
+    /**
+     * 自适应 ProxyFactory 实现对象
+     */
     private static final ProxyFactory proxyFactory = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
 
-    private static final Map<String, Integer> RANDOM_PORT_MAP = new HashMap<String, Integer>();
+    private static final Map<String, Integer> RANDOM_PORT_MAP = new HashMap<>();
 
     private static final ScheduledExecutorService delayExportExecutor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("DubboServiceDelayExporter", true));
-    private final List<URL> urls = new ArrayList<URL>();
-    private final List<Exporter<?>> exporters = new ArrayList<Exporter<?>>();
+    private final List<URL> urls = new ArrayList<>();
+    /**
+     * 服务配置暴露的 Exporter 。
+     * URL ：Exporter 不一定是 1：1 的关系。
+     * 例如 {@link #scope} 未设置时，会暴露 Local + Remote 两个，也就是 URL ：Exporter = 1：2
+     *      {@link #scope} 设置为空时，不会暴露，也就是 URL ：Exporter = 1：0
+     *      {@link #scope} 设置为 Local 或 Remote 任一时，会暴露 Local 或 Remote 一个，也就是 URL ：Exporter = 1：1
+     *
+     * 非配置。
+     */
+    private final List<Exporter<?>> exporters = new ArrayList<>();
     // interface type
+    /**
+     * {@link #interfaceName} 对应的接口类
+     *
+     * 非配置
+     */
     private String interfaceName;
     private Class<?> interfaceClass;
     // reference to interface impl
+    /**
+     * Service 对象
+     */
     private T ref;
     // service name
     private String path;
@@ -108,7 +129,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         if (providers == null || providers.isEmpty()) {
             return null;
         }
-        List<ProtocolConfig> protocols = new ArrayList<ProtocolConfig>(providers.size());
+        List<ProtocolConfig> protocols = new ArrayList<>(providers.size());
         for (ProviderConfig provider : providers) {
             protocols.add(convertProviderToProtocol(provider));
         }
@@ -120,7 +141,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         if (protocols == null || protocols.isEmpty()) {
             return null;
         }
-        List<ProviderConfig> providers = new ArrayList<ProviderConfig>(protocols.size());
+        List<ProviderConfig> providers = new ArrayList<>(protocols.size());
         for (ProtocolConfig provider : protocols) {
             providers.add(convertProtocolToProvider(provider));
         }
@@ -366,6 +387,12 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         }
     }
 
+    /**
+      * 基于单个协议，暴露服务
+      *
+      * @param protocolConfig 协议配置对象
+      * @param registryURLs 注册中心链接对象数组
+      */
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) {
         String name = protocolConfig.getName();
         if (name == null || name.length() == 0) {
@@ -486,14 +513,13 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
         String scope = url.getParameter(Constants.SCOPE_KEY);
         // don't export when none is configured
-        if (!Constants.SCOPE_NONE.toString().equalsIgnoreCase(scope)) {
-
-            // export to local if the config is not remote (export to remote only when config is remote)
-            if (!Constants.SCOPE_REMOTE.toString().equalsIgnoreCase(scope)) {
+        if (!Constants.SCOPE_NONE.equalsIgnoreCase(scope)) {
+//            当非 "remote" 时，调用 #exportLocal(url) 方法，本地暴露服务。
+            if (!Constants.SCOPE_REMOTE.equalsIgnoreCase(scope)) {
                 exportLocal(url);
             }
             // export to remote if the config is not local (export to local only when config is local)
-            if (!Constants.SCOPE_LOCAL.toString().equalsIgnoreCase(scope)) {
+            if (!Constants.SCOPE_LOCAL.equalsIgnoreCase(scope)) {
                 if (logger.isInfoEnabled()) {
                     logger.info("Export dubbo service " + interfaceClass.getName() + " to url " + url);
                 }
@@ -535,13 +561,18 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void exportLocal(URL url) {
         if (!Constants.LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
+            // 创建本地 Dubbo URL
             URL local = URL.valueOf(url.toFullString())
                     .setProtocol(Constants.LOCAL_PROTOCOL)
                     .setHost(LOCALHOST)
                     .setPort(0);
+            // 添加服务的真实类名，例如 DemoServiceImpl ，仅用于 RestProtocol 中。
             ServiceClassHolder.getInstance().pushServiceClass(getServiceClass(ref));
+            // 使用 ProxyFactory 创建 Invoker 对象
+            // 使用 Protocol 暴露 Invoker 对象
             Exporter<?> exporter = protocol.export(
                     proxyFactory.getInvoker(ref, (Class) interfaceClass, local));
+            // 添加到 `exporters`
             exporters.add(exporter);
             logger.info("Export dubbo service " + interfaceClass.getName() + " to local registry");
         }

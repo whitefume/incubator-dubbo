@@ -180,6 +180,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                     address = sysaddress;
                 }
                 // 有效的地址
+//                "N/A" 代表不配置注册中心。
                 if (address.length() > 0 && !RegistryConfig.NO_AVAILABLE.equalsIgnoreCase(address)) {
                     Map<String, String> map = new HashMap<>();
                     appendParameters(map, application);
@@ -204,9 +205,9 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                     for (URL url : urls) {
                         url = url.addParameter(Constants.REGISTRY_KEY, url.getProtocol());
                         url = url.setProtocol(Constants.REGISTRY_PROTOCOL);
-                        // 服务提供者 && 注册
+                        // 若是服务提供者，判断是否只订阅不注册
                         if ((provider && url.getParameter(Constants.REGISTER_KEY, true))
-                                // 服务消费者 && 订阅
+                                // 若是服务消费者，判断是否只注册不订阅
                                 || (!provider && url.getParameter(Constants.SUBSCRIBE_KEY, true))) {
                             registryList.add(url);
                         }

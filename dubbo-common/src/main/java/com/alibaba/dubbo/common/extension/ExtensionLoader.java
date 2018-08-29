@@ -244,8 +244,7 @@ public class ExtensionLoader<T> {
      * @param url   url
      * @param key   url parameter key which used to get extension point names
      *              Dubbo URL 参数名
-     * @param group group
-     *              过滤分组名
+     *  group 过滤分组名
      * @return extension list which are activated.
      * @see #getActivateExtension(com.alibaba.dubbo.common.URL, String[], String)
      */
