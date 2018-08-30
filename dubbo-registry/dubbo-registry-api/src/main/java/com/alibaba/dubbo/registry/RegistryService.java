@@ -22,23 +22,31 @@ import java.util.List;
 
 /**
  * RegistryService. (SPI, Prototype, ThreadSafe)
- *
+ * 注册中心服务接口，定义了注册、订阅、查询三种操作方法，如下：
  * @see com.alibaba.dubbo.registry.Registry
  * @see com.alibaba.dubbo.registry.RegistryFactory#getRegistry(URL)
  */
 public interface RegistryService {
 
     /**
+     * 注册数据，比如：提供者地址，消费者地址，路由规则，覆盖规则，等数据
      * Register data, such as : provider service, consumer address, route rule, override rule and other data.
      * <p>
      * Registering is required to support the contract:<br>
+     *     注册需要准守以下契约
      * 1. When the URL sets the check=false parameter. When the registration fails, the exception is not thrown and retried in the background. Otherwise, the exception will be thrown.<br>
+     *     当URL 设置 check =false 参数， 注册失败不会抛出异常。否则抛出异常
      * 2. When URL sets the dynamic=false parameter, it needs to be stored persistently, otherwise, it should be deleted automatically when the registrant has an abnormal exit.<br>
+     *     当URL 设置 dynamic=false ，需要被持久化存储，否则当注册终止推出自动删除
      * 3. When the URL sets category=routers, it means classified storage, the default category is providers, and the data can be notified by the classified section. <br>
+     *     当URL 设置 category=routers， 意味分类存储，默认分类是生成者，数据被分类部分通知
      * 4. When the registry is restarted, network jitter, data can not be lost, including automatically deleting data from the broken line.<br>
+     *     如果注册中心重启，网络抖动，数据不会丢失，包括从损坏线路自动删除
      * 5. Allow URLs which have the same URL but different parameters to coexist,they can't cover each other.<br>
+     *     允许URL列表中有相同URL， 但是参数不同，它们不能覆盖彼此
      *
      * @param url  Registration information , is not allowed to be empty, e.g: dubbo://10.20.153.10/com.alibaba.foo.BarService?version=1.0.0&application=kylin
+     *             注册信息， 不允许为空。
      */
     void register(URL url);
 
@@ -47,14 +55,18 @@ public interface RegistryService {
      * <p>
      * Unregistering is required to support the contract:<br>
      * 1. If it is the persistent stored data of dynamic=false, the registration data can not be found, then the IllegalStateException is thrown, otherwise it is ignored.<br>
+     *     如果dynamic=false 持久化存储数据， 注册数据没有发现抛出异常。 否则忽略
      * 2. Unregister according to the full url match.<br>
+     *     取消注册 根据全路径匹配
      *
      * @param url Registration information , is not allowed to be empty, e.g: dubbo://10.20.153.10/com.alibaba.foo.BarService?version=1.0.0&application=kylin
+     *            注册信息，不允许为空
      */
     void unregister(URL url);
 
     /**
      * Subscrib to eligible registered data and automatically push when the registered data is changed.
+     * 订阅符合条件的已注册数据，当有注册数据变更时自动推送。
      * <p>
      * Subscribing need to support contracts:<br>
      * 1. When the URL sets the check=false parameter. When the registration fails, the exception is not thrown and retried in the background. <br>
