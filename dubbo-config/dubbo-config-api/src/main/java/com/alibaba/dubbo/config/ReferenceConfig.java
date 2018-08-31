@@ -63,11 +63,15 @@ import static com.alibaba.dubbo.common.utils.NetUtils.isInvalidLocalHost;
 public class ReferenceConfig<T> extends AbstractReferenceConfig {
 
     private static final long serialVersionUID = -5864351140409987595L;
-
+    /**
+     * 自适应 Protocol 实现对象
+     */
     private static final Protocol refprotocol = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
 
     private static final Cluster cluster = ExtensionLoader.getExtensionLoader(Cluster.class).getAdaptiveExtension();
-
+    /**
+     * 自适应 ProxyFactory 实现对象
+     */
     private static final ProxyFactory proxyFactory = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
     private final List<URL> urls = new ArrayList<URL>();
     // interface name
@@ -75,7 +79,9 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     private Class<?> interfaceClass;
     // client type
     private String client;
-    // url for peer-to-peer invocation
+    /**
+     * 直连服务提供者地址
+     */
     private String url;
     // method configs
     private List<MethodConfig> methods;
@@ -335,25 +341,36 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         ApplicationModel.initConsumerModel(getUniqueServiceName(), consumerModel);
     }
 
+    /**
+     *
+     * @param map 方法参数，URL 参数集合，包含服务引用配置对象的配置项。
+     */
     @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
     private T createProxy(Map<String, String> map) {
         URL tmpUrl = new URL("temp", "localhost", 0, map);
+        // 是否本地引用
         final boolean isJvmRefer;
+        // injvm 属性为空，不通过该属性判断, 配置了 url 配置项，说明使用直连服务提供者的功能，则不使用本地使用。
         if (isInjvm() == null) {
             if (url != null && url.length() > 0) { // if a url is specified, don't do local reference
                 isJvmRefer = false;
+                // 通过 `tmpUrl` 判断，是否需要本地引用
             } else if (InjvmProtocol.getInjvmProtocol().isInjvmRefer(tmpUrl)) {
                 // by default, reference local service if there is
                 isJvmRefer = true;
             } else {
+                // 默认不是
                 isJvmRefer = false;
             }
         } else {
+            // 通过 injvm 属性。
             isJvmRefer = isInjvm().booleanValue();
         }
-
+        // 本地引用
         if (isJvmRefer) {
+            // 创建服务引用 URL 对象
             URL url = new URL(Constants.LOCAL_PROTOCOL, NetUtils.LOCALHOST, 0, interfaceClass.getName()).addParameters(map);
+            // 引用服务，返回 Invoker 对象
             invoker = refprotocol.refer(interfaceClass, url);
             if (logger.isInfoEnabled()) {
                 logger.info("Using injvm service " + interfaceClass.getName());
@@ -410,7 +427,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 }
             }
         }
-
+        // 启动时检查
         Boolean c = check;
         if (c == null && consumer != null) {
             c = consumer.isCheck();
@@ -424,7 +441,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         if (logger.isInfoEnabled()) {
             logger.info("Refer dubbo service " + interfaceClass.getName() + " from url " + invoker.getUrl());
         }
-        // create service proxy
+        // 创建 Service 代理对象
         return (T) proxyFactory.getProxy(invoker);
     }
 

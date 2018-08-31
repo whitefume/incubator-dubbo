@@ -28,8 +28,7 @@ public interface ExporterListener {
     /**
      * The exporter exported.
      *
-     * @param exporter
-     * @throws RpcException
+     * 当服务暴露完成
      * @see com.alibaba.dubbo.rpc.Protocol#export(Invoker)
      */
     void exported(Exporter<?> exporter) throws RpcException;
@@ -37,8 +36,7 @@ public interface ExporterListener {
     /**
      * The exporter unexported.
      *
-     * @param exporter
-     * @throws RpcException
+     * 当服务取消暴露完成
      * @see com.alibaba.dubbo.rpc.Exporter#unexport()
      */
     void unexported(Exporter<?> exporter);
