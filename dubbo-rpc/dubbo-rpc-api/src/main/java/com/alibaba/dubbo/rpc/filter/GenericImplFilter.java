@@ -51,7 +51,9 @@ public class GenericImplFilter implements Filter {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        // 获得 generic 配置项
         String generic = invoker.getUrl().getParameter(Constants.GENERIC_KEY);
+        // 泛化实现的调用
         if (ProtocolUtils.isGeneric(generic)
                 && !Constants.$INVOKE.equals(invocation.getMethodName())
                 && invocation instanceof RpcInvocation) {
@@ -60,34 +62,45 @@ public class GenericImplFilter implements Filter {
             Class<?>[] parameterTypes = invocation2.getParameterTypes();
             Object[] arguments = invocation2.getArguments();
 
+            // 获得参数类型数组
             String[] types = new String[parameterTypes.length];
             for (int i = 0; i < parameterTypes.length; i++) {
                 types[i] = ReflectUtils.getName(parameterTypes[i]);
             }
 
             Object[] args;
+            // bean， 序列化参数， 方法参数 -》 JavaBeanDescriptor
             if (ProtocolUtils.isBeanGenericSerialization(generic)) {
                 args = new Object[arguments.length];
                 for (int i = 0; i < arguments.length; i++) {
                     args[i] = JavaBeanSerializeUtil.serialize(arguments[i], JavaBeanAccessor.METHOD);
                 }
             } else {
+                // true， 序列化参数， 仅有 Map -》 POJO
                 args = PojoUtils.generalize(arguments);
             }
 
+            // 修改调用方法的名字为$invoke
             invocation2.setMethodName(Constants.$INVOKE);
+            // 设置调用方法参数类型
             invocation2.setParameterTypes(GENERIC_PARAMETER_TYPES);
+            // 设置调用方法参数数组， 分别为方法名， 参数类型数组、 参数数组
             invocation2.setArguments(new Object[]{methodName, types, args});
+
+            // RPC 调用
             Result result = invoker.invoke(invocation2);
 
+            // 反序列化正常结果
             if (!result.hasException()) {
                 Object value = result.getValue();
                 try {
+                    // 获得对应的方法 Method 对象，
                     Method method = invoker.getInterface().getMethod(methodName, parameterTypes);
                     if (ProtocolUtils.isBeanGenericSerialization(generic)) {
                         if (value == null) {
                             return new RpcResult(value);
                         } else if (value instanceof JavaBeanDescriptor) {
+                            // bean， JavaBeanDescriptor -》 结果
                             return new RpcResult(JavaBeanSerializeUtil.deserialize((JavaBeanDescriptor) value));
                         } else {
                             throw new RpcException(
@@ -105,6 +118,7 @@ public class GenericImplFilter implements Filter {
                     throw new RpcException(e.getMessage(), e);
                 }
             } else if (result.getException() instanceof GenericException) {
+                // 反序列化异常结果
                 GenericException exception = (GenericException) result.getException();
                 try {
                     String className = exception.getExceptionClass();
@@ -112,6 +126,7 @@ public class GenericImplFilter implements Filter {
                     Throwable targetException = null;
                     Throwable lastException = null;
                     try {
+                        // 创建原始异常
                         targetException = (Throwable) clazz.newInstance();
                     } catch (Throwable e) {
                         lastException = e;
@@ -124,6 +139,7 @@ public class GenericImplFilter implements Filter {
                             }
                         }
                     }
+                    // 设置异常的明细
                     if (targetException != null) {
                         try {
                             Field field = Throwable.class.getDeclaredField("detailMessage");
@@ -134,6 +150,7 @@ public class GenericImplFilter implements Filter {
                         } catch (Throwable e) {
                             logger.warn(e.getMessage(), e);
                         }
+                        // 创建新的异常 RpcResult 对象
                         result = new RpcResult(targetException);
                     } else if (lastException != null) {
                         throw lastException;
