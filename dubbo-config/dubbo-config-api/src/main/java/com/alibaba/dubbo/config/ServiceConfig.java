@@ -485,6 +485,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             }
         }
         if (!ConfigUtils.isEmpty(token)) {
+            // true || default 时，UUID 随机生成
             if (ConfigUtils.isDefault(token)) {
                 map.put(Constants.TOKEN_KEY, UUID.randomUUID().toString());
             } else {

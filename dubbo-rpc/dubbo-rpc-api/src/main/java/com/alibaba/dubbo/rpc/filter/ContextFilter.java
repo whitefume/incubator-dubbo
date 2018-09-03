@@ -38,17 +38,20 @@ public class ContextFilter implements Filter {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        // 创建新的 `attachments` 集合，清理公用的隐式参数
         Map<String, String> attachments = invocation.getAttachments();
         if (attachments != null) {
-            attachments = new HashMap<String, String>(attachments);
+            attachments = new HashMap<>(attachments);
             attachments.remove(Constants.PATH_KEY);
             attachments.remove(Constants.GROUP_KEY);
             attachments.remove(Constants.VERSION_KEY);
             attachments.remove(Constants.DUBBO_VERSION_KEY);
             attachments.remove(Constants.TOKEN_KEY);
             attachments.remove(Constants.TIMEOUT_KEY);
+            // 清空消费端的异步参数
             attachments.remove(Constants.ASYNC_KEY);// Remove async property to avoid being passed to the following invoke chain.
         }
+        // 设置 RpcContext 对象
         RpcContext.getContext()
                 .setInvoker(invoker)
                 .setInvocation(invocation)
@@ -58,6 +61,7 @@ public class ContextFilter implements Filter {
 
         // mreged from dubbox
         // we may already added some attachments into RpcContext before this filter (e.g. in rest protocol)
+        // 在此过滤器(例如rest协议)之前，我们可能已经在RpcContext中添加了一些附件。
         if (attachments != null) {
             if (RpcContext.getContext().getAttachments() != null) {
                 RpcContext.getContext().getAttachments().putAll(attachments);
@@ -66,15 +70,18 @@ public class ContextFilter implements Filter {
             }
         }
 
+        // 设置 RpcInvocation 对象的 `invoker` 属性
         if (invocation instanceof RpcInvocation) {
             ((RpcInvocation) invocation).setInvoker(invoker);
         }
         try {
+            // 服务调用
             RpcResult result = (RpcResult) invoker.invoke(invocation);
             // pass attachments to result
             result.addAttachments(RpcContext.getServerContext().getAttachments());
             return result;
         } finally {
+            // 移除上下文
             RpcContext.removeContext();
             RpcContext.getServerContext().clearAttachments();
         }
