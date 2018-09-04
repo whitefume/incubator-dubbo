@@ -30,8 +30,9 @@ public class LruCache implements Cache {
     private final Map<Object, Object> store;
 
     public LruCache(URL url) {
+        // `"cache.size"` 配置项，设置缓存大小
         final int max = url.getParameter("cache.size", 1000);
-        this.store = new LRUCache<Object, Object>(max);
+        this.store = new LRUCache<>(max);
     }
 
     @Override

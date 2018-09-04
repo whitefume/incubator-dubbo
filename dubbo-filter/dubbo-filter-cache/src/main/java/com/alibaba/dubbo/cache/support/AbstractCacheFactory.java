@@ -30,13 +30,14 @@ import java.util.concurrent.ConcurrentMap;
  */
 public abstract class AbstractCacheFactory implements CacheFactory {
 
-    private final ConcurrentMap<String, Cache> caches = new ConcurrentHashMap<String, Cache>();
+    private final ConcurrentMap<String, Cache> caches = new ConcurrentHashMap<>();
 
     @Override
     public Cache getCache(URL url, Invocation invocation) {
         url = url.addParameter(Constants.METHOD_KEY, invocation.getMethodName());
         String key = url.toFullString();
         Cache cache = caches.get(key);
+        // 不存在，创建 Cache 对象，并缓存
         if (cache == null) {
             caches.put(key, createCache(url));
             cache = caches.get(key);

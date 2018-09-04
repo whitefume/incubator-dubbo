@@ -26,6 +26,7 @@ import com.alibaba.dubbo.remoting.transport.MultiMessageHandler;
 
 public class ChannelHandlers {
 
+    //  单例
     private static ChannelHandlers INSTANCE = new ChannelHandlers();
 
     protected ChannelHandlers() {
@@ -44,7 +45,10 @@ public class ChannelHandlers {
     }
 
     protected ChannelHandler wrapInternal(ChannelHandler handler, URL url) {
-        return new MultiMessageHandler(new HeartbeatHandler(ExtensionLoader.getExtensionLoader(Dispatcher.class)
+        // 我们就看到了多个 ChannelHandlerDelegate 的组合。
+        return new MultiMessageHandler(new HeartbeatHandler(
+//                实际上也是返回一个 ChannelHandlerDelegate 对象。
+                ExtensionLoader.getExtensionLoader(Dispatcher.class)
                 .getAdaptiveExtension().dispatch(handler, url)));
     }
 }

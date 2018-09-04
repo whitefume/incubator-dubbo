@@ -37,11 +37,13 @@ public class JCache implements com.alibaba.dubbo.cache.Cache {
     private final Cache<Object, Object> store;
 
     public JCache(URL url) {
+        // 获得 Cache Key
         String method = url.getParameter(Constants.METHOD_KEY, "");
         String key = url.getAddress() + "." + url.getServiceKey() + "." + method;
+        // `"jcache"` 配置项，为 Java SPI 实现的全限定类名
         // jcache parameter is the full-qualified class name of SPI implementation
         String type = url.getParameter("jcache");
-
+        // 基于类型，获得 javax.cache.CachingProvider 对象，
         CachingProvider provider = type == null || type.length() == 0 ? Caching.getCachingProvider() : Caching.getCachingProvider(type);
         CacheManager cacheManager = provider.getCacheManager();
         Cache<Object, Object> cache = cacheManager.getCache(key);

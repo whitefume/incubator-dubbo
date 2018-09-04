@@ -24,6 +24,7 @@ import com.alibaba.dubbo.remoting.transport.ChannelHandlerDispatcher;
 
 /**
  * Transporter facade. (API, Static, ThreadSafe)
+ * Facade 设计模式
  */
 public class Transporters {
 
@@ -51,11 +52,13 @@ public class Transporters {
         if (handlers.length == 1) {
             handler = handlers[0];
         } else {
+            // 在 ChannelHandlerDispatcher 中，会循环调用 handlers ，对应的方法。
             handler = new ChannelHandlerDispatcher(handlers);
         }
         return getTransporter().bind(url, handler);
     }
 
+    // ，连接一个服务器，即创建一个客户端
     public static Client connect(String url, ChannelHandler... handler) throws RemotingException {
         return connect(URL.valueOf(url), handler);
     }

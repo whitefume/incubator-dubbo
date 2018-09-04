@@ -27,9 +27,13 @@ import com.alibaba.dubbo.remoting.RemotingException;
  * AbstractPeer
  */
 public abstract class AbstractPeer implements Endpoint, ChannelHandler {
-
+    /**
+     * 通道处理器
+     */
     private final ChannelHandler handler;
-
+    /**
+     * URL
+     */
     private volatile URL url;
 
     // closing closed means the process is being closed and close is finished
@@ -50,6 +54,8 @@ public abstract class AbstractPeer implements Endpoint, ChannelHandler {
 
     @Override
     public void send(Object message) throws RemotingException {
+        //true 等待消息发出，消息发送失败将抛出异常。
+        //false 不等待消息发出，将消息放入 IO 队列，即刻返回。
         send(message, url.getParameter(Constants.SENT_KEY, false));
     }
 

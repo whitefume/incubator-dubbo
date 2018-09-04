@@ -33,11 +33,17 @@ import com.alibaba.dubbo.remoting.transport.codec.CodecAdapter;
 public abstract class AbstractEndpoint extends AbstractPeer implements Resetable {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractEndpoint.class);
-
+    /**
+     * 编解码器
+     */
     private Codec2 codec;
-
+    /**
+     * 超时时间
+     */
     private int timeout;
-
+    /**
+     * 连接超时时间
+     */
     private int connectTimeout;
 
     public AbstractEndpoint(URL url, ChannelHandler handler) {
@@ -52,6 +58,7 @@ public abstract class AbstractEndpoint extends AbstractPeer implements Resetable
         if (ExtensionLoader.getExtensionLoader(Codec2.class).hasExtension(codecName)) {
             return ExtensionLoader.getExtensionLoader(Codec2.class).getExtension(codecName);
         } else {
+            // Codec 接口，已经废弃了，目前 Dubbo 项目里，也没有它的拓展实现。
             return new CodecAdapter(ExtensionLoader.getExtensionLoader(Codec.class)
                     .getExtension(codecName));
         }

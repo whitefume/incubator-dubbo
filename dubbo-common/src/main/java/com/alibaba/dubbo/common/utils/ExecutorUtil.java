@@ -127,6 +127,7 @@ public class ExecutorUtil {
      */
     public static URL setThreadName(URL url, String defaultName) {
         String name = url.getParameter(Constants.THREAD_NAME_KEY, defaultName);
+//        ，线程名中，包含 URL 的地址信息。
         name = name + "-" + url.getAddress();
         url = url.addParameter(Constants.THREAD_NAME_KEY, name);
         return url;

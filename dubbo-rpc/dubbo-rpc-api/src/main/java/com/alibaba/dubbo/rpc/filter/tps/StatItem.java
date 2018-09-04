@@ -25,7 +25,9 @@ class StatItem {
     private long lastResetTime;
 
     private long interval;
-
+    /**
+     * 当前周期，剩余种子数
+     */
     private AtomicInteger token;
 
     private int rate;
@@ -39,6 +41,7 @@ class StatItem {
     }
 
     public boolean isAllowable() {
+        // 若到达下一个周期，恢复可用种子数，设置最后重置时间。
         long now = System.currentTimeMillis();
         if (now > lastResetTime + interval) {
             token.set(rate);
@@ -48,6 +51,7 @@ class StatItem {
         int value = token.get();
         boolean flag = false;
         while (value > 0 && !flag) {
+            // CAS ，直到或得到一个种子，或者没有足够种子
             flag = token.compareAndSet(value, value - 1);
             value = token.get();
         }

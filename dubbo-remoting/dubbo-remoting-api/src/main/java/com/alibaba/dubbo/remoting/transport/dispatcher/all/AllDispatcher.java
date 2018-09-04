@@ -22,6 +22,9 @@ import com.alibaba.dubbo.remoting.Dispatcher;
 
 /**
  * default thread pool configure
+ * AllChannelHandler 也是 ChannelHandlerDelegate 类型。也就是说“线程模型”，也是通过装饰器模式，组合而成。
+
+ 每个 Dispatcher 实现类，都对应一个 ChannelHandler 实现类。默认未配置的情况下，使用 AllDispatcher 调度。
  */
 public class AllDispatcher implements Dispatcher {
 

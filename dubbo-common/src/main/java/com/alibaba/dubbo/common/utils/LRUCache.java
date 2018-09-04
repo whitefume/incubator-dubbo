@@ -27,6 +27,7 @@ public class LRUCache<K, V> extends LinkedHashMap<K, V> {
     private static final float DEFAULT_LOAD_FACTOR = 0.75f;
 
     private static final int DEFAULT_MAX_CAPACITY = 1000;
+    // 属性，锁。避免并发读写，导致死锁。
     private final Lock lock = new ReentrantLock();
     private volatile int maxCapacity;
 
@@ -35,12 +36,18 @@ public class LRUCache<K, V> extends LinkedHashMap<K, V> {
     }
 
     public LRUCache(int maxCapacity) {
+        // 最后一个参数，按访问顺序(调用get方法)的链表
         super(16, DEFAULT_LOAD_FACTOR, true);
         this.maxCapacity = maxCapacity;
     }
 
+    /**
+     * 根据链表中元素的顺序可以分为：按插入顺序的链表，和按访问顺序(调用get方法)的链表。默认是按插入顺序排序，
+     * 如果指定按访问顺序排序，那么调用get方法后，会将这次访问的元素移至链表尾部，不断访问可以形成按访问顺序排序的链表。
+     */
     @Override
     protected boolean removeEldestEntry(java.util.Map.Entry<K, V> eldest) {
+        // 重写 removeEldestEntry 方法返回 true 值，指定插入元素时移除最老的元素。
         return size() > maxCapacity;
     }
 

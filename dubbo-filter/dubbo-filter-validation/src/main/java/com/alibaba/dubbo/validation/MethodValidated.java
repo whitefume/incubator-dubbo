@@ -31,6 +31,7 @@ import java.lang.annotation.Target;
  * </pre>
  * It means both Save group and Update group are needed to check when method relatedQuery is invoked.
  * </p>
+ * 使用场景：当调用某个方法时，需要检查多个分组，可以在接口方法上加上该注解。
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
